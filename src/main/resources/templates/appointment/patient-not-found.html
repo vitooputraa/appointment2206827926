@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/navbar :: header('Patient Not Found')}"></head>
+
+<body>
+    <nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+    <div class="container py-5">
+        <div class="row justify-content-center py-5">
+            <div class="col-md-6 text-center">
+                <h2 class="fw-bold mb-2">Patient Not Found</h2>
+                <p class="text-secondary mb-4">Please insert as new patient before making the appointment.</p>
+                <a th:href="@{/appointment/create-with-patient(nik=${searchedNik})}"
+                    class="btn btn-primary px-4 py-2 fw-semibold">
+                    Insert New Patient
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/navbar :: scripts}"></div>
+</body>
+
+</html>

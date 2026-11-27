@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/navbar :: header('Patient Found')}"></head>
+
+<body>
+    <nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+    <div class="container py-5">
+        <h2 class="fw-bold text-center mb-4">Patient Found</h2>
+        <div class="row justify-content-center">
+            <div class="col-md-7">
+                <div class="card card-apap p-4 p-md-5">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">NIK</label>
+                            <input type="text" class="form-control bg-light" th:value="${patient.nik}" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Name</label>
+                            <input type="text" class="form-control bg-light" th:value="${patient.name}" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Gender</label>
+                            <input type="text" class="form-control bg-light"
+                                th:value="${patient.gender ? 'Female' : 'Male'}" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Date of Birth</label>
+                            <input type="text" class="form-control bg-light"
+                                th:value="${#temporals.format(patient.birthDate, 'dd-MM-yyyy')}" readonly>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <a th:href="@{/appointment/{nik}/create(nik=${patient.nik})}"
+                            class="btn btn-primary px-4 fw-semibold">
+                            Create Appointment
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/navbar :: scripts}"></div>
+</body>
+
+</html>

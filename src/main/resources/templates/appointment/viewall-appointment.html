@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/navbar :: header('Appointments')}"></head>
+
+<body>
+    <nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+    <div class="container py-5">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h2 class="fw-bold mb-0">Appointments</h2>
+            <div class="d-flex gap-2">
+                <a th:href="@{/appointment/stat}" class="btn btn-secondary fw-semibold px-3">
+                    <i class="bi bi-bar-chart-fill me-1"></i> Show Statistic
+                </a>
+                <a th:href="@{/patient/search}" class="btn btn-primary fw-semibold px-3">
+                    <i class="bi bi-plus-lg me-1"></i> Add Appointment
+                </a>
+            </div>
+        </div>
+        <hr class="mb-4">
+
+        <div class="card card-apap p-4">
+            <div class="row g-3 align-items-end mb-4">
+                <div class="col-md-3">
+                    <label for="statusFilter" class="form-label fw-semibold">Status</label>
+                    <select id="statusFilter" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="Created">Created</option>
+                        <option value="Done">Done</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="searchNameInput" class="form-label fw-semibold">Doctor / Patient</label>
+                    <input type="text" id="searchNameInput" class="form-control" placeholder="Search by name...">
+                </div>
+                <div class="col-md-2">
+                    <label for="fromDate" class="form-label fw-semibold">From</label>
+                    <input type="date" id="fromDate" class="form-control">
+                </div>
+                <div class="col-md-2">
+                    <label for="toDate" class="form-label fw-semibold">To</label>
+                    <input type="date" id="toDate" class="form-control">
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="button" id="filterDateBtn" class="btn btn-primary w-100">Filter</button>
+                    <button type="button" id="resetDateBtn" class="btn btn-outline-secondary">Reset</button>
+                </div>
+            </div>
+
+            <div id="rangeSummaryAlert" class="alert alert-info py-2 px-3 d-none mb-3">
+                Jumlah appointment pada rentang waktu terpilih: <strong id="rangeCountText">0</strong>
+            </div>
+            <div id="rangeErrorAlert" class="alert alert-danger py-2 px-3 d-none mb-3"></div>
+
+            <div class="table-responsive">
+                <table id="appointmentTable" class="table table-hover align-middle table-apap w-100">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>ID</th>
+                            <th>Doctor</th>
+                            <th>Patient</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/navbar :: scripts}"></div>
+    <script>
+        $(document).ready(function () {
+            function formatDateDisplay(isoDate) {
+                if (!isoDate) return '-';
+                const parts = isoDate.split('-');
+                if (parts.length !== 3) return isoDate;
+                return `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+
+            function renderStatusBadge(statusText) {
+                if (statusText === 'Done') {
+                    return '<span class="badge bg-success">Done</span>';
+                } else if (statusText === 'Cancelled') {
+                    return '<span class="badge bg-danger">Cancelled</span>';
+                }
+                return '<span class="badge bg-primary">Created</span>';
+            }
+
+            const table = $('#appointmentTable').DataTable({
+                dom: 'lrtip',
+                columnDefs: [
+                    { orderable: false, targets: [0, 5, 6] }
+                ]
+            });
+
+            function loadAppointments(fromDate, toDate, showRangeCount) {
+                $('#rangeErrorAlert').addClass('d-none');
+
+                const params = new URLSearchParams();
+                if (fromDate) params.append('from', fromDate);
+                if (toDate) params.append('to', toDate);
+
+                const query = params.toString();
+                const url = query ? `/api/appointment/all?${query}` : '/api/appointment/all';
+
+                $.getJSON(url)
+                    .done(function (response) {
+                        const list = response.data || [];
+                        table.clear();
+
+                        list.forEach(function (item, idx) {
+                            table.row.add([
+                                idx + 1,
+                                `<span class="fw-semibold">${item.id}</span>`,
+                                item.doctorName,
+                                item.patientName,
+                                `<span data-order="${item.date}">${formatDateDisplay(item.date)}</span>`,
+                                renderStatusBadge(item.statusText),
+                                `<a href="/appointment/${item.id}" class="btn btn-primary btn-sm px-3">Detail</a>`
+                            ]);
+                        });
+
+                        table.draw();
+
+                        if (showRangeCount && (fromDate || toDate)) {
+                            $('#rangeCountText').text(response.count ?? list.length);
+                            $('#rangeSummaryAlert').removeClass('d-none');
+                        } else {
+                            $('#rangeSummaryAlert').addClass('d-none');
+                        }
+                    })
+                    .fail(function (xhr) {
+                        const msg = xhr.responseJSON?.message || 'Gagal memuat data appointment.';
+                        $('#rangeErrorAlert').text(msg).removeClass('d-none');
+                    });
+            }
+
+            // Load awal dari REST API
+            loadAppointments('', '', false);
+
+            // Filter Status (kolom indeks 5)
+            $('#statusFilter').on('change', function () {
+                table.column(5).search($(this).val()).draw();
+            });
+
+            // Search berdasarkan nama Doctor atau Patient (kolom 2 & 3)
+            $('#searchNameInput').on('keyup', function () {
+                const keyword = $(this).val().toLowerCase();
+                $.fn.dataTable.ext.search.pop();
+                if (keyword) {
+                    $.fn.dataTable.ext.search.push(function (settings, data) {
+                        const doctor = (data[2] || '').toLowerCase();
+                        const patient = (data[3] || '').toLowerCase();
+                        return doctor.includes(keyword) || patient.includes(keyword);
+                    });
+                }
+                table.draw();
+            });
+
+            // Filter rentang waktu inklusif di backend service
+            $('#filterDateBtn').on('click', function () {
+                const fromDate = $('#fromDate').val();
+                const toDate = $('#toDate').val();
+                loadAppointments(fromDate, toDate, true);
+            });
+
+            $('#resetDateBtn').on('click', function () {
+                $('#fromDate').val('');
+                $('#toDate').val('');
+                loadAppointments('', '', false);
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/navbar :: header('New Patient & Appointment')}"></head>
+
+<body>
+    <nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+    <div class="container py-5">
+        <h2 class="fw-bold text-center mb-4">New Patient &amp; Appointment</h2>
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+                <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+                <div class="card card-apap p-4 p-md-5">
+                    <form th:action="@{/appointment/create-with-patient}" th:object="${appointmentDTO}" method="post">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Name</label>
+                                <input type="text" th:field="*{name}" class="form-control" placeholder="Name" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">NIK</label>
+                                <input type="text" th:field="*{nik}" class="form-control" placeholder="NIK" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Email</label>
+                                <input type="email" th:field="*{email}" class="form-control" placeholder="Email"
+                                    required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold d-block">Gender</label>
+                                <div class="form-check form-check-inline mt-2">
+                                    <input class="form-check-input" type="radio" th:field="*{gender}" th:value="false"
+                                        id="maleOpt" required>
+                                    <label class="form-check-label" for="maleOpt">Male</label>
+                                </div>
+                                <div class="form-check form-check-inline mt-2">
+                                    <input class="form-check-input" type="radio" th:field="*{gender}" th:value="true"
+                                        id="femaleOpt">
+                                    <label class="form-check-label" for="femaleOpt">Female</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Date of Birth</label>
+                                <input type="date" th:field="*{birthDate}" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Birth Place</label>
+                                <input type="text" th:field="*{birthPlace}" class="form-control"
+                                    placeholder="Birth Place">
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="mb-3">
+                            <label for="doctorSelect" class="form-label fw-semibold">Doctor</label>
+                            <select id="doctorSelect" th:field="*{doctorId}" class="form-select" required>
+                                <option value="" selected disabled>Choose doctor...</option>
+                                <option th:each="doc : ${doctors}" th:value="${doc.id}" th:text="${doc.name}"></option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="scheduleSelect" class="form-label fw-semibold">Schedule</label>
+                            <select id="scheduleSelect" th:field="*{date}" class="form-select" required>
+                                <option value="" selected disabled>Select doctor first...</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Created By</label>
+                            <input type="text" th:field="*{createdBy}" class="form-control" placeholder="Created By">
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary px-4">Submit</button>
+                            <a th:href="@{/appointment/all}" class="btn btn-danger px-4">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/navbar :: scripts}"></div>
+    <script>
+        $(document).ready(function () {
+            $('#doctorSelect').on('change', function () {
+                const doctorId = $(this).val();
+                const $schedule = $('#scheduleSelect');
+                $schedule.html('<option value="" selected disabled>Loading schedules...</option>');
+
+                $.getJSON(`/api/doctor/${doctorId}/schedules`)
+                    .done(function (options) {
+                        $schedule.empty();
+                        if (!options || options.length === 0) {
+                            $schedule.append('<option value="" selected disabled>No available schedule in the next 4 weeks</option>');
+                            return;
+                        }
+                        $schedule.append('<option value="" selected disabled>Choose schedule...</option>');
+                        options.forEach(function (opt) {
+                            $schedule.append(`<option value="${opt.value}">${opt.label}</option>`);
+                        });
+                    })
+                    .fail(function () {
+                        $schedule.html('<option value="" selected disabled>Failed to load schedules</option>');
+                    });
+            });
+        });
+    </script>
+</body>
+
+</html>

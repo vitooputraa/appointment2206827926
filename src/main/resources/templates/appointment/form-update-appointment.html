@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/navbar :: header('Update Appointment')}"></head>
+
+<body>
+    <nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+    <div class="container py-5">
+        <h2 class="fw-bold text-center mb-4">Update Appointment</h2>
+        <div class="row justify-content-center">
+            <div class="col-md-7">
+                <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+                <div class="card card-apap p-4 p-md-5">
+                    <form th:action="@{/appointment/update}" th:object="${appointmentDTO}" method="post">
+                        <input type="hidden" id="appointmentId" th:field="*{id}">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">ID</label>
+                            <input type="text" class="form-control bg-light" th:value="*{id}" readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="doctorSelect" class="form-label fw-semibold">Doctor</label>
+                            <select id="doctorSelect" th:field="*{doctorId}" class="form-select" required>
+                                <option th:each="doc : ${doctors}" th:value="${doc.id}" th:text="${doc.name}"></option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="scheduleSelect" class="form-label fw-semibold">Schedule</label>
+                            <select id="scheduleSelect" th:field="*{date}" class="form-select" required>
+                                <option th:each="opt : ${scheduleOptions}" th:value="${opt.value}"
+                                    th:text="${opt.label}"
+                                    th:selected="${opt.value == #strings.toString(appointmentDTO.date)}"></option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Updated By</label>
+                            <input type="text" th:field="*{updatedBy}" class="form-control" placeholder="Updated By">
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary px-4">Submit</button>
+                            <a th:href="@{/appointment/{id}(id=*{id})}" class="btn btn-danger px-4">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/navbar :: scripts}"></div>
+    <script>
+        $(document).ready(function () {
+            $('#doctorSelect').on('change', function () {
+                const doctorId = $(this).val();
+                const appointmentId = $('#appointmentId').val();
+                const $schedule = $('#scheduleSelect');
+                $schedule.html('<option value="" selected disabled>Loading schedules...</option>');
+
+                $.getJSON(`/api/doctor/${doctorId}/schedules`, { excludeAppointmentId: appointmentId })
+                    .done(function (options) {
+                        $schedule.empty();
+                        if (!options || options.length === 0) {
+                            $schedule.append('<option value="" selected disabled>No available schedule in the next 4 weeks</option>');
+                            return;
+                        }
+                        $schedule.append('<option value="" selected disabled>Choose schedule...</option>');
+                        options.forEach(function (opt) {
+                            $schedule.append(`<option value="${opt.value}">${opt.label}</option>`);
+                        });
+                    })
+                    .fail(function () {
+                        $schedule.html('<option value="" selected disabled>Failed to load schedules</option>');
+                    });
+            });
+        });
+    </script>
+</body>
+
+</html>

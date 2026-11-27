@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/navbar :: header('Doctor Detail')}"></head>
+
+<body>
+    <nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+    <div class="container py-5">
+        <div class="card card-apap mb-4">
+            <div class="card-header-apap d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold">Doctor Detail</h5>
+                <div class="d-flex gap-2">
+                    <a th:href="@{/doctor/{id}/update(id=${doctor.id})}"
+                        class="btn btn-info text-white btn-sm fw-semibold px-3">Update</a>
+                    <button type="button" class="btn btn-danger btn-sm fw-semibold px-3" data-bs-toggle="modal"
+                        data-bs-target="#deleteDoctorModal">
+                        Delete
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <table class="table table-borderless mb-0">
+                            <tr>
+                                <th class="text-secondary" style="width: 180px;">ID</th>
+                                <td class="fw-semibold" th:text="': ' + ${doctor.id}">: BDH001</td>
+                            </tr>
+                            <tr>
+                                <th class="text-secondary">Name</th>
+                                <td th:text="': ' + ${doctor.name}">: dr. Budi Sasongko, Sp.B</td>
+                            </tr>
+                            <tr>
+                                <th class="text-secondary">Email</th>
+                                <td th:text="': ' + ${doctor.email}">: budi@apapmedika.com</td>
+                            </tr>
+                            <tr>
+                                <th class="text-secondary">Gender</th>
+                                <td th:text="': ' + (${doctor.gender} ? 'Female' : 'Male')">: Male</td>
+                            </tr>
+                            <tr>
+                                <th class="text-secondary">Schedules</th>
+                                <td th:text="': ' + ${formattedSchedules}">: Monday, Wednesday, Friday</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless mb-0">
+                            <tr>
+                                <th class="text-secondary" style="width: 190px;">Specialization</th>
+                                <td th:text="': ' + ${specializationName}">: Bedah (Sp.B)</td>
+                            </tr>
+                            <tr>
+                                <th class="text-secondary">Years of Experience</th>
+                                <td th:text="': ' + ${doctor.yearsOfExperience} + ' years'">: 8 years</td>
+                            </tr>
+                            <tr>
+                                <th class="text-secondary">Fee</th>
+                                <td th:text="': Rp' + ${#numbers.formatInteger(doctor.fee, 1, 'POINT')}">: Rp300.000
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="text-secondary">Created At</th>
+                                <td
+                                    th:text="': ' + (${doctor.createdAt != null} ? ${#temporals.format(doctor.createdAt, 'dd MMMM yyyy HH:mm')} : '-')">
+                                    : -</td>
+                            </tr>
+                            <tr>
+                                <th class="text-secondary">Last Updated At</th>
+                                <td
+                                    th:text="': ' + (${doctor.updatedAt != null} ? ${#temporals.format(doctor.updatedAt, 'dd MMMM yyyy HH:mm')} : '-')">
+                                    : -</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+                <h5 class="fw-bold mb-3">Appointment List</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle table-apap">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Appointment ID</th>
+                                <th>Patient</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${#lists.isEmpty(appointments)}">
+                                <td colspan="6" class="text-center text-muted py-3">No appointments scheduled for this
+                                    doctor yet.</td>
+                            </tr>
+                            <tr th:each="appt, iterStat : ${appointments}">
+                                <td th:text="${iterStat.count}">1</td>
+                                <td class="fw-semibold" th:text="${appt.id}">BDH1909001</td>
+                                <td th:text="${appt.patient.name}">Ahmad Setiawan</td>
+                                <td th:text="${#temporals.format(appt.date, 'dd-MM-yyyy')}">19-09-2024</td>
+                                <td>
+                                    <span th:if="${appt.status == 0}" class="badge bg-primary">Created</span>
+                                    <span th:if="${appt.status == 1}" class="badge bg-success">Done</span>
+                                    <span th:if="${appt.status == 2}" class="badge bg-danger">Cancelled</span>
+                                </td>
+                                <td class="text-center">
+                                    <a th:href="@{/appointment/{id}(id=${appt.id})}"
+                                        class="btn btn-primary btn-sm px-3">Detail</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4">
+                    <a th:href="@{/doctor/all}" class="btn btn-secondary px-4">Kembali</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Soft Delete -->
+    <div class="modal fade" id="deleteDoctorModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-body text-center p-4">
+                    <h5 class="fw-bold mb-4">Are you sure you want to delete this doctor?</h5>
+                    <form th:action="@{/doctor/delete}" method="post" class="d-inline">
+                        <input type="hidden" name="id" th:value="${doctor.id}">
+                        <button type="submit" class="btn btn-primary px-4 me-2">Yes</button>
+                    </form>
+                    <button type="button" class="btn btn-danger px-4" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/navbar :: scripts}"></div>
+</body>
+
+</html>

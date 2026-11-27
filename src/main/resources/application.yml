@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: appointment2206827926
+  datasource:
+    # Konfigurasi Development Lokal (sesuaikan password dengan PostgreSQL lokal kamu)
+    url: jdbc:postgresql://localhost:5432/appointment2206827926
+    username: postgres
+    password: Nowyouseeme2_
+
+    # Konfigurasi Penilaian / Build Final .jar (uncomment sebelum ./gradlew bootJar)
+    # url: jdbc:postgresql://localhost:15001/appointment2206827926
+    # username: postgres
+    # password: secret99
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation: true
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+server:
+  port: 8080

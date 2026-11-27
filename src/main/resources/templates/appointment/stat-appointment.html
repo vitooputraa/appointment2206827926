@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/navbar :: header('Appointment Statistic')}"></head>
+
+<body>
+    <nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+    <div class="container py-5">
+        <h2 class="fw-bold text-center mb-4">Appointments</h2>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card card-apap p-4 p-md-5">
+                    <div class="row g-3 align-items-end mb-4">
+                        <div class="col-md-4">
+                            <label for="periodSelect" class="form-label fw-semibold">Period</label>
+                            <select id="periodSelect" class="form-select">
+                                <option value="monthly" selected>Monthly</option>
+                                <option value="quarter">Quarter</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="yearInput" class="form-label fw-semibold">Year</label>
+                            <input type="number" id="yearInput" class="form-control" th:value="${currentYear}"
+                                min="2000" max="2100">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" id="applyChartBtn"
+                                class="btn btn-primary w-100 fw-semibold">Apply</button>
+                        </div>
+                    </div>
+
+                    <div style="position: relative; height: 380px;">
+                        <canvas id="appointmentChart"></canvas>
+                    </div>
+
+                    <div class="mt-4">
+                        <a th:href="@{/appointment/all}" class="btn btn-secondary px-4">Kembali</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/navbar :: scripts}"></div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            let chartInstance = null;
+
+            function loadChart() {
+                const period = $('#periodSelect').val();
+                const year = $('#yearInput').val();
+
+                $.getJSON('/api/appointment/stat', { period: period, year: year })
+                    .done(function (res) {
+                        const ctx = document.getElementById('appointmentChart').getContext('2d');
+                        if (chartInstance) {
+                            chartInstance.destroy();
+                        }
+
+                        chartInstance = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: res.labels,
+                                datasets: [{
+                                    label: 'Number of Appointments',
+                                    data: res.data,
+                                    backgroundColor: '#674ea7',
+                                    borderRadius: 4
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        ticks: {
+                                            stepSize: 1,
+                                            precision: 0
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    });
+            }
+
+            loadChart();
+
+            $('#applyChartBtn').on('click', function () {
+                loadChart();
+            });
+        });
+    </script>
+</body>
+
+</html>

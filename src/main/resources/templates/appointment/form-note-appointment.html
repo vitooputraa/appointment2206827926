@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/navbar :: header('Appointment Diagnosis & Treatments')}"></head>
+
+<body>
+    <nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+    <div class="container py-5">
+        <div class="card card-apap">
+            <div class="card-header-apap d-flex align-items-center gap-3">
+                <h5 class="mb-0 fw-bold">Appointment Detail - Diagnosis &amp; Treatments</h5>
+                <span th:if="${appointment.status == 0}" class="badge bg-success px-3 py-2">Created</span>
+                <span th:if="${appointment.status == 1}" class="badge bg-info text-dark px-3 py-2">Done</span>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <table class="table table-borderless mb-0">
+                            <tr>
+                                <th class="text-secondary" style="width: 170px;">ID</th>
+                                <td class="fw-semibold" th:text="': ' + ${appointment.id}"></td>
+                            </tr>
+                            <tr>
+                                <th class="text-secondary">Patient</th>
+                                <td th:text="': ' + ${appointment.patient.name}"></td>
+                            </tr>
+                            <tr>
+                                <th class="text-secondary">Doctor</th>
+                                <td th:text="': ' + ${appointment.doctor.name}"></td>
+                            </tr>
+                            <tr>
+                                <th class="text-secondary">Appointment Date</th>
+                                <td th:text="': ' + ${#temporals.format(appointment.date, 'dd MMMM yyyy')}"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <form th:action="@{/appointment/note}" th:object="${noteDTO}" method="post">
+                    <input type="hidden" th:field="*{id}">
+
+                    <div class="mb-4">
+                        <label for="diagnosis" class="form-label fw-bold">Diagnosis</label>
+                        <textarea id="diagnosis" th:field="*{diagnosis}" class="form-control" rows="4"
+                            placeholder="Type diagnosis here..."></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label fw-bold mb-0">Treatments</label>
+                            <button type="button" id="addTreatmentRowBtn" class="btn btn-primary btn-sm px-3">Add
+                                Row</button>
+                        </div>
+
+                        <div id="treatmentContainer">
+                            <div class="input-group mb-2 treatment-row" th:each="selectedId : *{treatmentIds}">
+                                <select name="treatmentIds" class="form-select">
+                                    <option value="">Choose treatment...</option>
+                                    <option th:each="t : ${treatments}" th:value="${t.id}"
+                                        th:text="${t.name + ' - Rp' + #numbers.formatInteger(t.price, 1, 'POINT')}"
+                                        th:selected="${selectedId != null and t.id == selectedId}"></option>
+                                </select>
+                                <button type="button" class="btn btn-danger remove-treatment-btn">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary px-4">Submit</button>
+                        <a th:href="@{/appointment/{id}(id=${appointment.id})}" class="btn btn-danger px-4">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template opsi treatment tersembunyi untuk tombol Add Row -->
+    <select id="treatmentOptionsTemplate" class="d-none">
+        <option value="">Choose treatment...</option>
+        <option th:each="t : ${treatments}" th:value="${t.id}"
+            th:text="${t.name + ' - Rp' + #numbers.formatInteger(t.price, 1, 'POINT')}"></option>
+    </select>
+
+    <div th:replace="~{fragments/navbar :: scripts}"></div>
+    <script>
+        $(document).ready(function () {
+            const optionsHtml = $('#treatmentOptionsTemplate').html();
+
+            $('#addTreatmentRowBtn').on('click', function () {
+                const row = `
+                <div class="input-group mb-2 treatment-row">
+                    <select name="treatmentIds" class="form-select">${optionsHtml}</select>
+                    <button type="button" class="btn btn-danger remove-treatment-btn">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+                $('#treatmentContainer').append(row);
+            });
+
+            $(document).on('click', '.remove-treatment-btn', function () {
+                if ($('.treatment-row').length > 1) {
+                    $(this).closest('.treatment-row').remove();
+                } else {
+                    $(this).closest('.treatment-row').find('select').val('');
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

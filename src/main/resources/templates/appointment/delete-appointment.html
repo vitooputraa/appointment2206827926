@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/navbar :: header('Delete Appointment')}"></head>
+
+<body>
+    <nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card card-apap p-5 text-center">
+                    <h4 class="fw-bold mb-3">Are you sure you want to delete this appointment?</h4>
+                    <p class="text-secondary mb-4">
+                        <strong th:text="${appointment.id}">BDH1909003</strong><br>
+                        <span th:text="${appointment.patient.name + ' - ' + appointment.doctor.name}"></span>
+                    </p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <form th:action="@{/appointment/delete}" method="post">
+                            <input type="hidden" name="id" th:value="${appointment.id}">
+                            <button type="submit" class="btn btn-primary px-4">Yes</button>
+                        </form>
+                        <a th:href="@{/appointment/{id}(id=${appointment.id})}" class="btn btn-danger px-4">Cancel</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/navbar :: scripts}"></div>
+</body>
+
+</html>
